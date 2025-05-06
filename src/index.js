@@ -24,9 +24,16 @@ if (exampleContainer === document.body) {
     exampleContainer.style.height = '100vh'
     exampleContainer.style.margin = '0px'
 }
+// Application places canvas directly below example container, rather than library automatically placing it to bottom of document body. This is required for correct draw order in Interactive Examples DOM tree.
+const canvas = document.createElement('canvas')
+exampleContainer.append(canvas)
 const lc = lightningChart({
-            resourcesBaseUrl: new URL(document.head.baseURI).origin + new URL(document.head.baseURI).pathname + 'resources/',
-        })
+    sharedContextOptions: {
+        canvas,
+        // NOTE: Greatly improves performance on Mozilla firefox
+        useIndividualCanvas: false,
+    },
+})
 
 fetch(new URL(document.head.baseURI).origin + new URL(document.head.baseURI).pathname + 'examples/assets/0514/racing-data.json')
     .then((r) => r.json())
@@ -59,11 +66,6 @@ fetch(new URL(document.head.baseURI).origin + new URL(document.head.baseURI).pat
         // #region Tire temperatures
         const containerTireTemperatures = document.createElement('div')
         exampleContainer.append(containerTireTemperatures)
-        containerTireTemperatures.style.position = 'absolute'
-        containerTireTemperatures.style.left = '0px'
-        containerTireTemperatures.style.top = '0px'
-        containerTireTemperatures.style.width = '50%'
-        containerTireTemperatures.style.height = '30%'
         const chartTireTemperatures = lc
             .ChartXY({
                 container: containerTireTemperatures,
@@ -71,6 +73,11 @@ fetch(new URL(document.head.baseURI).origin + new URL(document.head.baseURI).pat
                 theme: Themes[new URLSearchParams(window.location.search).get('theme') || 'darkGold'] || undefined,
             })
             .setTitle('')
+        containerTireTemperatures.style.position = 'absolute'
+        containerTireTemperatures.style.left = '0px'
+        containerTireTemperatures.style.top = '0px'
+        containerTireTemperatures.style.width = '50%'
+        containerTireTemperatures.style.height = '30%'
         const isDarkTheme = chartTireTemperatures.getTheme().isDark
         if (isImageFill(chartTireTemperatures.engine.getBackgroundFillStyle())) {
             chartTireTemperatures.engine.setBackgroundFillStyle(new SolidFill({ color: ColorRGBA(0, 0, 0) }))
@@ -151,11 +158,6 @@ fetch(new URL(document.head.baseURI).origin + new URL(document.head.baseURI).pat
         // #region Gauges
         const containerSpeedGauge = document.createElement('div')
         exampleContainer.append(containerSpeedGauge)
-        containerSpeedGauge.style.position = 'absolute'
-        containerSpeedGauge.style.left = '0px'
-        containerSpeedGauge.style.top = '30%'
-        containerSpeedGauge.style.width = '25%'
-        containerSpeedGauge.style.height = '30%'
         const speedGauge = lc
             .Gauge({
                 container: containerSpeedGauge,
@@ -178,16 +180,16 @@ fetch(new URL(document.head.baseURI).origin + new URL(document.head.baseURI).pat
             .setValueIndicatorThickness(3)
             .setTickFormatter((value) => (value > 0 && value < 240 ? '' : value.toFixed(0)))
             .setInterval(0, 240)
+        containerSpeedGauge.style.position = 'absolute'
+        containerSpeedGauge.style.left = '0px'
+        containerSpeedGauge.style.top = '30%'
+        containerSpeedGauge.style.width = '25%'
+        containerSpeedGauge.style.height = '30%'
         if (isImageFill(speedGauge.engine.getBackgroundFillStyle())) {
             speedGauge.engine.setBackgroundFillStyle(new SolidFill({ color: ColorRGBA(0, 0, 0) }))
         }
         const containerRPMGauge = document.createElement('div')
         exampleContainer.append(containerRPMGauge)
-        containerRPMGauge.style.width = '25%'
-        containerRPMGauge.style.height = '30%'
-        containerRPMGauge.style.position = 'absolute'
-        containerRPMGauge.style.left = '25%'
-        containerRPMGauge.style.top = '30%'
         const rpmGauge = lc
             .Gauge({
                 container: containerRPMGauge,
@@ -211,6 +213,11 @@ fetch(new URL(document.head.baseURI).origin + new URL(document.head.baseURI).pat
             ])
             .setValueIndicatorThickness(3)
             .setTickFormatter((value) => (value > 0 && value < 8000 ? '' : value.toFixed(0)))
+        containerRPMGauge.style.width = '25%'
+        containerRPMGauge.style.height = '30%'
+        containerRPMGauge.style.position = 'absolute'
+        containerRPMGauge.style.left = '25%'
+        containerRPMGauge.style.top = '30%'
         onData((sample) => {
             speedGauge.setValue((sample.speed ?? 0) * 3.6)
             rpmGauge.setValue(sample.current_engine_rpm ?? 0)
@@ -225,11 +232,6 @@ fetch(new URL(document.head.baseURI).origin + new URL(document.head.baseURI).pat
 
         const containerTimeSeries = document.createElement('div')
         exampleContainer.append(containerTimeSeries)
-        containerTimeSeries.style.position = 'absolute'
-        containerTimeSeries.style.left = '0px'
-        containerTimeSeries.style.top = '60%'
-        containerTimeSeries.style.width = '50%'
-        containerTimeSeries.style.height = '40%'
         const chartTimeSeries = lc
             .ChartXY({
                 container: containerTimeSeries,
@@ -237,6 +239,11 @@ fetch(new URL(document.head.baseURI).origin + new URL(document.head.baseURI).pat
                 // theme: Themes.darkGold
             })
             .setTitle('')
+        containerTimeSeries.style.position = 'absolute'
+        containerTimeSeries.style.left = '0px'
+        containerTimeSeries.style.top = '60%'
+        containerTimeSeries.style.width = '50%'
+        containerTimeSeries.style.height = '40%'
         chartTimeSeries.axisX
             .setTickStrategy(AxisTickStrategies.Time)
             .setScrollStrategy(AxisScrollStrategies.progressive)
@@ -270,17 +277,17 @@ fetch(new URL(document.head.baseURI).origin + new URL(document.head.baseURI).pat
 
         const containerScatter = document.createElement('div')
         exampleContainer.append(containerScatter)
-        containerScatter.style.width = '50%'
-        containerScatter.style.height = '30%'
-        containerScatter.style.top = '0px'
-        containerScatter.style.right = '0px'
-        containerScatter.style.position = 'absolute'
         const chartScatter = lc
             .ChartXY({
                 container: containerScatter,
                 theme: Themes[new URLSearchParams(window.location.search).get('theme') || 'darkGold'] || undefined,
             })
             .setTitle('')
+        containerScatter.style.width = '50%'
+        containerScatter.style.height = '30%'
+        containerScatter.style.top = '0px'
+        containerScatter.style.right = '0px'
+        containerScatter.style.position = 'absolute'
         if (isImageFill(chartScatter.engine.getBackgroundFillStyle())) {
             chartScatter.engine.setBackgroundFillStyle(new SolidFill({ color: ColorRGBA(0, 0, 0) }))
         }
@@ -326,11 +333,6 @@ fetch(new URL(document.head.baseURI).origin + new URL(document.head.baseURI).pat
         // #region Heatmap
         const containerHeatmap = document.createElement('div')
         exampleContainer.append(containerHeatmap)
-        containerHeatmap.style.width = '50%'
-        containerHeatmap.style.height = '30%'
-        containerHeatmap.style.top = '30%'
-        containerHeatmap.style.right = '0px'
-        containerHeatmap.style.position = 'absolute'
         const chartHeatmap = lc
             .ChartXY({
                 container: containerHeatmap,
@@ -339,6 +341,11 @@ fetch(new URL(document.head.baseURI).origin + new URL(document.head.baseURI).pat
             .setTitle('')
             .setTitlePosition('series-left-top')
             .setCursorMode(undefined)
+        containerHeatmap.style.width = '50%'
+        containerHeatmap.style.height = '30%'
+        containerHeatmap.style.top = '30%'
+        containerHeatmap.style.right = '0px'
+        containerHeatmap.style.position = 'absolute'
         if (isImageFill(chartHeatmap.engine.getBackgroundFillStyle())) {
             chartHeatmap.engine.setBackgroundFillStyle(new SolidFill({ color: ColorRGBA(0, 0, 0) }))
         }
@@ -425,17 +432,17 @@ fetch(new URL(document.head.baseURI).origin + new URL(document.head.baseURI).pat
         //#region Table
         const containerTable = document.createElement('div')
         exampleContainer.append(containerTable)
-        containerTable.style.width = '50%'
-        containerTable.style.height = '40%'
-        containerTable.style.top = '60%'
-        containerTable.style.right = '0px'
-        containerTable.style.position = 'absolute'
         const table = lc
             .DataGrid({
                 container: containerTable,
                 // theme: Themes.darkGold
             })
             .setTitle('')
+        containerTable.style.width = '50%'
+        containerTable.style.height = '40%'
+        containerTable.style.top = '60%'
+        containerTable.style.right = '0px'
+        containerTable.style.position = 'absolute'
         if (isImageFill(table.engine.getBackgroundFillStyle())) {
             table.engine.setBackgroundFillStyle(new SolidFill({ color: ColorRGBA(0, 0, 0) }))
         }
