@@ -15,6 +15,7 @@ const {
     transparentFill,
     PointShape,
     AxisTickStrategies,
+    DataSetXY,
     Themes,
 } = lcjs
 
@@ -63,6 +64,16 @@ fetch(new URL(document.head.baseURI).origin + new URL(document.head.baseURI).pat
             listeners.push(clbk)
         }
 
+        const dataSet = new DataSetXY({
+            schema: {
+                time: { pattern: 'progressive' },
+            },
+            autoDetectPatterns: false,
+        }).setMaxSampleCount({ mode: 'auto', max: 1_000_000 })
+        onData((sample) => {
+            dataSet.appendSample(sample)
+        })
+
         // #region Tire temperatures
         const containerTireTemperatures = document.createElement('div')
         exampleContainer.append(containerTireTemperatures)
@@ -70,6 +81,7 @@ fetch(new URL(document.head.baseURI).origin + new URL(document.head.baseURI).pat
             .ChartXY({
                 container: containerTireTemperatures,
                 defaultAxisX: { type: 'linear-highPrecision' },
+                legend: { visible: false },
                 theme: Themes[new URLSearchParams(window.location.search).get('theme') || 'darkGold'] || undefined,
             })
             .setTitle('')
@@ -84,7 +96,7 @@ fetch(new URL(document.head.baseURI).origin + new URL(document.head.baseURI).pat
         }
         chartTireTemperatures.axisX
             .setTickStrategy(AxisTickStrategies.Time)
-            .setScrollStrategy(AxisScrollStrategies.progressive)
+            .setScrollStrategy(AxisScrollStrategies.scrolling)
             .setDefaultInterval((state) => ({
                 end: state.dataMax ?? 0,
                 start: (state.dataMax ?? 0) - 30_000,
@@ -126,14 +138,10 @@ fetch(new URL(document.head.baseURI).origin + new URL(document.head.baseURI).pat
             'tire_temp_rear_right',
         ].map((key, i) => {
             const series = chartTireTemperatures
-                .addPointLineAreaSeries({ dataPattern: 'ProgressiveX' })
+                .addLineSeries()
                 .setName(key)
-                .setAreaFillStyle(emptyFill)
-                .setMaxSampleCount(200_000)
                 .setStrokeStyle(temperatureStroke)
-            onData((sample) => {
-                series.appendSample({ x: sample.time, y: sample[key] })
-            })
+                .setDataSet(dataSet, { x: 'time', y: key })
         })
         const fuelAxis = chartTireTemperatures
             .addAxisY({ opposite: true })
@@ -144,14 +152,11 @@ fetch(new URL(document.head.baseURI).origin + new URL(document.head.baseURI).pat
             )
             .setInterval({ start: 0, end: 1 })
         const fuelSeries = chartTireTemperatures
-            .addPointLineAreaSeries({
-                dataPattern: 'ProgressiveX',
+            .addAreaSeries({
                 axisY: fuelAxis,
                 automaticColorIndex: 0,
             })
-            .setMaxSampleCount(200_000)
-
-        onData((sample) => fuelSeries.appendSample({ x: sample.time, y: sample.fuel }))
+            .setDataSet(dataSet, { x: 'time', y: 'fuel' })
 
         // #endregion
 
@@ -236,6 +241,7 @@ fetch(new URL(document.head.baseURI).origin + new URL(document.head.baseURI).pat
             .ChartXY({
                 container: containerTimeSeries,
                 defaultAxisX: { type: 'linear-highPrecision' },
+                legend: { visible: false },
                 // theme: Themes.darkGold
             })
             .setTitle('')
@@ -246,7 +252,7 @@ fetch(new URL(document.head.baseURI).origin + new URL(document.head.baseURI).pat
         containerTimeSeries.style.height = '40%'
         chartTimeSeries.axisX
             .setTickStrategy(AxisTickStrategies.Time)
-            .setScrollStrategy(AxisScrollStrategies.progressive)
+            .setScrollStrategy(AxisScrollStrategies.scrolling)
             .setDefaultInterval((state) => ({
                 end: state.dataMax ?? 0,
                 start: (state.dataMax ?? 0) - 5_000,
@@ -262,13 +268,7 @@ fetch(new URL(document.head.baseURI).origin + new URL(document.head.baseURI).pat
                 .setTitle(key)
                 .setAnimationScroll(false)
                 .setScrollStrategy(AxisScrollStrategies.fitting)
-            const series = chartTimeSeries
-                .addPointLineAreaSeries({ dataPattern: 'ProgressiveX', axisY })
-                .setMaxSampleCount(200_000)
-                .setAreaFillStyle(emptyFill)
-            onData((sample) => {
-                series.appendSample({ x: sample.time, y: sample[key] })
-            })
+            const series = chartTimeSeries.addLineSeries({ axisY }).setDataSet(dataSet, { x: 'time', y: key })
         })
 
         // #endregion
@@ -280,6 +280,7 @@ fetch(new URL(document.head.baseURI).origin + new URL(document.head.baseURI).pat
         const chartScatter = lc
             .ChartXY({
                 container: containerScatter,
+                legend: { visible: false },
                 theme: Themes[new URLSearchParams(window.location.search).get('theme') || 'darkGold'] || undefined,
             })
             .setTitle('')
@@ -296,19 +297,12 @@ fetch(new URL(document.head.baseURI).origin + new URL(document.head.baseURI).pat
         chartScatter.forEachAxis((axis) => axis.setAnimationScroll(false))
         chartScatter.setSeriesBackgroundFillStyle(new SolidFill({ color: ColorHEX(isDarkTheme ? '#000000' : '#ffffff') }))
         const seriesScatter = chartScatter
-            .addPointLineAreaSeries({ dataPattern: null, lookupValues: true })
-            .setStrokeStyle(emptyLine)
-            .setPointFillStyle(transparentFill)
+            .addPointSeries()
             .setPointSize(10)
+            .setPointStrokeStyle(emptyLine)
             .setPointShape(PointShape.Circle)
             .setEffect(false)
-        onData((sample) =>
-            seriesScatter.appendSample({
-                x: sample.acceleration_x,
-                y: sample.acceleration_z,
-                lookupValue: sample.time,
-            }),
-        )
+            .setDataSet(dataSet, { x: 'acceleration_x', y: 'acceleration_z', lookupValue: 'time' })
         setInterval(() => {
             seriesScatter.setPointFillStyle(
                 new PalettedFill({
@@ -336,6 +330,7 @@ fetch(new URL(document.head.baseURI).origin + new URL(document.head.baseURI).pat
         const chartHeatmap = lc
             .ChartXY({
                 container: containerHeatmap,
+                legend: { visible: false },
                 // theme: Themes.darkGold,
             })
             .setTitle('')
@@ -378,19 +373,12 @@ fetch(new URL(document.head.baseURI).origin + new URL(document.head.baseURI).pat
                 }),
             )
         const seriesHeatmapTrack = chartHeatmap
-            .addPointLineAreaSeries({ dataPattern: null, automaticColorIndex: 0 })
-            .setPointFillStyle(emptyFill)
-        const seriesHeatmapLatest = chartHeatmap
-            .addPointLineAreaSeries({ dataPattern: null, automaticColorIndex: 0 })
-            .setPointSize(15)
-            .setPointShape(PointShape.Star)
+            .addLineSeries({ automaticColorIndex: 0 })
+            .setDataSet(dataSet, { x: 'position_x', y: 'position_z' })
+        const seriesHeatmapLatest = chartHeatmap.addPointSeries({ automaticColorIndex: 0 }).setPointSize(15).setPointShape(PointShape.Star)
         let prev
         onData((sample, iSample) => {
             if (typeof sample.lap_number === 'number') chartHeatmap.setTitle(`Lap ${sample.lap_number + 1}`)
-            seriesHeatmapTrack.appendSample({
-                x: sample.position_x,
-                y: sample.position_z,
-            })
             seriesHeatmapLatest.setSamples({
                 xValues: [sample.position_x],
                 yValues: [sample.position_z],
