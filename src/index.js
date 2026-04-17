@@ -1,3 +1,14 @@
+window.lcjsSmallView = window.devicePixelRatio >= 2
+if (!window.__lcjsDebugOverlay) {
+    window.__lcjsDebugOverlay = document.createElement('div')
+    window.__lcjsDebugOverlay.style.cssText = 'position:fixed;top:10px;left:10px;background:rgba(0,0,0,0.7);color:#fff;padding:4px 8px;z-index:99999;font:12px monospace;pointer-events:none'
+    const attach = () => { if (document.body && !window.__lcjsDebugOverlay.parentNode) document.body.appendChild(window.__lcjsDebugOverlay) }
+    attach()
+    setInterval(() => {
+        attach()
+        window.__lcjsDebugOverlay.textContent = window.innerWidth + 'x' + window.innerHeight + ' dpr=' + window.devicePixelRatio + ' small=' + window.lcjsSmallView
+    }, 500)
+}
 const lcjs = require('@lightningchart/lcjs')
 const {
     AxisScrollStrategies,
@@ -84,19 +95,9 @@ fetch(new URL(document.head.baseURI).origin + new URL(document.head.baseURI).pat
                 legend: { visible: false },
                 theme: (() => {
     const t = Themes[new URLSearchParams(window.location.search).get('theme') || 'darkGold'] || undefined
-    const smallView = window.devicePixelRatio >= 2
-    if (!window.__lcjsDebugOverlay) {
-        window.__lcjsDebugOverlay = document.createElement('div')
-        window.__lcjsDebugOverlay.style.cssText = 'position:fixed;top:0;left:0;background:rgba(0,0,0,0.7);color:#fff;padding:4px 8px;z-index:99999;font:12px monospace;pointer-events:none'
-        if (document.body) document.body.appendChild(window.__lcjsDebugOverlay)
-        setInterval(() => {
-            if (!window.__lcjsDebugOverlay.parentNode && document.body) document.body.appendChild(window.__lcjsDebugOverlay)
-            window.__lcjsDebugOverlay.textContent = window.innerWidth + 'x' + window.innerHeight + ' dpr=' + window.devicePixelRatio + ' small=' + (window.devicePixelRatio >= 2)
-        }, 500)
-    }
-    return t && smallView ? lcjs.scaleTheme(t, 0.5) : t
+    return t && window.lcjsSmallView ? lcjs.scaleTheme(t, 0.5) : t
 })(),
-textRenderer: window.devicePixelRatio >= 2 ? lcjs.htmlTextRenderer : undefined,
+textRenderer: window.lcjsSmallView ? lcjs.htmlTextRenderer : undefined,
             })
             .setTitle('')
         containerTireTemperatures.style.position = 'absolute'
@@ -180,7 +181,11 @@ textRenderer: window.devicePixelRatio >= 2 ? lcjs.htmlTextRenderer : undefined,
         const speedGauge = lc
             .Gauge({
                 container: containerSpeedGauge,
-                // theme: Themes.darkGold
+                theme: (() => {
+    const t = Themes[new URLSearchParams(window.location.search).get('theme') || 'darkGold'] || undefined
+    return t && window.lcjsSmallView ? lcjs.scaleTheme(t, 0.5) : t
+})(),
+textRenderer: window.lcjsSmallView ? lcjs.htmlTextRenderer : undefined,
             })
             .setTitle('')
             .setUnitLabel('kph')
@@ -212,7 +217,11 @@ textRenderer: window.devicePixelRatio >= 2 ? lcjs.htmlTextRenderer : undefined,
         const rpmGauge = lc
             .Gauge({
                 container: containerRPMGauge,
-                // theme: Themes.darkGold
+                theme: (() => {
+    const t = Themes[new URLSearchParams(window.location.search).get('theme') || 'darkGold'] || undefined
+    return t && window.lcjsSmallView ? lcjs.scaleTheme(t, 0.5) : t
+})(),
+textRenderer: window.lcjsSmallView ? lcjs.htmlTextRenderer : undefined,
             })
             .setTitle('')
             .setUnitLabel('rpm')
@@ -256,7 +265,11 @@ textRenderer: window.devicePixelRatio >= 2 ? lcjs.htmlTextRenderer : undefined,
                 container: containerTimeSeries,
                 defaultAxisX: { type: 'linear-highPrecision' },
                 legend: { visible: false },
-                // theme: Themes.darkGold
+                theme: (() => {
+    const t = Themes[new URLSearchParams(window.location.search).get('theme') || 'darkGold'] || undefined
+    return t && window.lcjsSmallView ? lcjs.scaleTheme(t, 0.5) : t
+})(),
+textRenderer: window.lcjsSmallView ? lcjs.htmlTextRenderer : undefined,
             })
             .setTitle('')
         containerTimeSeries.style.position = 'absolute'
@@ -297,19 +310,9 @@ textRenderer: window.devicePixelRatio >= 2 ? lcjs.htmlTextRenderer : undefined,
                 legend: { visible: false },
                 theme: (() => {
     const t = Themes[new URLSearchParams(window.location.search).get('theme') || 'darkGold'] || undefined
-    const smallView = window.devicePixelRatio >= 2
-    if (!window.__lcjsDebugOverlay) {
-        window.__lcjsDebugOverlay = document.createElement('div')
-        window.__lcjsDebugOverlay.style.cssText = 'position:fixed;top:10px;left:10px;background:rgba(0,0,0,0.7);color:#fff;padding:4px 8px;z-index:99999;font:12px monospace;pointer-events:none'
-        if (document.body) document.body.appendChild(window.__lcjsDebugOverlay)
-        setInterval(() => {
-            if (!window.__lcjsDebugOverlay.parentNode && document.body) document.body.appendChild(window.__lcjsDebugOverlay)
-            window.__lcjsDebugOverlay.textContent = window.innerWidth + 'x' + window.innerHeight + ' dpr=' + window.devicePixelRatio + ' small=' + (window.devicePixelRatio >= 2)
-        }, 500)
-    }
-    return t && smallView ? lcjs.scaleTheme(t, 0.5) : t
+    return t && window.lcjsSmallView ? lcjs.scaleTheme(t, 0.5) : t
 })(),
-textRenderer: window.devicePixelRatio >= 2 ? lcjs.htmlTextRenderer : undefined,
+textRenderer: window.lcjsSmallView ? lcjs.htmlTextRenderer : undefined,
             })
             .setTitle('')
         containerScatter.style.width = '50%'
@@ -359,7 +362,11 @@ textRenderer: window.devicePixelRatio >= 2 ? lcjs.htmlTextRenderer : undefined,
             .ChartXY({
                 container: containerHeatmap,
                 legend: { visible: false },
-                // theme: Themes.darkGold,
+                theme: (() => {
+    const t = Themes[new URLSearchParams(window.location.search).get('theme') || 'darkGold'] || undefined
+    return t && window.lcjsSmallView ? lcjs.scaleTheme(t, 0.5) : t
+})(),
+textRenderer: window.lcjsSmallView ? lcjs.htmlTextRenderer : undefined,
             })
             .setTitle('')
             .setTitlePosition('series-left-top')
@@ -451,7 +458,11 @@ textRenderer: window.devicePixelRatio >= 2 ? lcjs.htmlTextRenderer : undefined,
         const table = lc
             .DataGrid({
                 container: containerTable,
-                // theme: Themes.darkGold
+                theme: (() => {
+    const t = Themes[new URLSearchParams(window.location.search).get('theme') || 'darkGold'] || undefined
+    return t && window.lcjsSmallView ? lcjs.scaleTheme(t, 0.5) : t
+})(),
+textRenderer: window.lcjsSmallView ? lcjs.htmlTextRenderer : undefined,
             })
             .setTitle('')
         containerTable.style.width = '30%'
