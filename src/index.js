@@ -82,7 +82,20 @@ fetch(new URL(document.head.baseURI).origin + new URL(document.head.baseURI).pat
                 container: containerTireTemperatures,
                 defaultAxisX: { type: 'linear-highPrecision' },
                 legend: { visible: false },
-                theme: Themes[new URLSearchParams(window.location.search).get('theme') || 'darkGold'] || undefined,
+                theme: (() => {
+    const t = Themes[new URLSearchParams(window.location.search).get('theme') || 'darkGold'] || undefined
+    const smallView = Math.min(window.innerWidth, window.innerHeight) < 500
+    if (!window.__lcjsDebugOverlay) {
+        window.__lcjsDebugOverlay = document.createElement('div')
+        window.__lcjsDebugOverlay.style.cssText = 'position:fixed;top:0;left:0;background:rgba(0,0,0,0.7);color:#fff;padding:4px 8px;z-index:99999;font:12px monospace;pointer-events:none'
+        if (document.body) document.body.appendChild(window.__lcjsDebugOverlay)
+        setInterval(() => {
+            if (!window.__lcjsDebugOverlay.parentNode && document.body) document.body.appendChild(window.__lcjsDebugOverlay)
+            window.__lcjsDebugOverlay.textContent = window.innerWidth + 'x' + window.innerHeight + ' dpr=' + window.devicePixelRatio + ' small=' + (Math.min(window.innerWidth, window.innerHeight) < 500)
+        }, 500)
+    }
+    return t && smallView ? lcjs.scaleTheme(t, 0.5) : t
+})(),
             })
             .setTitle('')
         containerTireTemperatures.style.position = 'absolute'
@@ -281,7 +294,20 @@ fetch(new URL(document.head.baseURI).origin + new URL(document.head.baseURI).pat
             .ChartXY({
                 container: containerScatter,
                 legend: { visible: false },
-                theme: Themes[new URLSearchParams(window.location.search).get('theme') || 'darkGold'] || undefined,
+                theme: (() => {
+    const t = Themes[new URLSearchParams(window.location.search).get('theme') || 'darkGold'] || undefined
+    const smallView = Math.min(window.innerWidth, window.innerHeight) < 500
+    if (!window.__lcjsDebugOverlay) {
+        window.__lcjsDebugOverlay = document.createElement('div')
+        window.__lcjsDebugOverlay.style.cssText = 'position:fixed;top:0;left:0;background:rgba(0,0,0,0.7);color:#fff;padding:4px 8px;z-index:99999;font:12px monospace;pointer-events:none'
+        if (document.body) document.body.appendChild(window.__lcjsDebugOverlay)
+        setInterval(() => {
+            if (!window.__lcjsDebugOverlay.parentNode && document.body) document.body.appendChild(window.__lcjsDebugOverlay)
+            window.__lcjsDebugOverlay.textContent = window.innerWidth + 'x' + window.innerHeight + ' dpr=' + window.devicePixelRatio + ' small=' + (Math.min(window.innerWidth, window.innerHeight) < 500)
+        }, 500)
+    }
+    return t && smallView ? lcjs.scaleTheme(t, 0.5) : t
+})(),
             })
             .setTitle('')
         containerScatter.style.width = '50%'
@@ -426,10 +452,10 @@ fetch(new URL(document.head.baseURI).origin + new URL(document.head.baseURI).pat
                 // theme: Themes.darkGold
             })
             .setTitle('')
-        containerTable.style.width = '50%'
+        containerTable.style.width = '30%'
         containerTable.style.height = '40%'
         containerTable.style.top = '60%'
-        containerTable.style.right = '0px'
+        containerTable.style.left = '50%'
         containerTable.style.position = 'absolute'
         if (isImageFill(table.engine.getBackgroundFillStyle())) {
             table.engine.setBackgroundFillStyle(new SolidFill({ color: ColorRGBA(0, 0, 0) }))
@@ -473,5 +499,67 @@ fetch(new URL(document.head.baseURI).origin + new URL(document.head.baseURI).pat
             }
             prevSample = sample
         })
+        // #endregion
+
+        //#region Linear gauges
+        const containerLinGauges = document.createElement('div')
+        containerLinGauges.style.width = '20%'
+        containerLinGauges.style.height = '40%'
+        containerLinGauges.style.top = '60%'
+        containerLinGauges.style.right = '0'
+        containerLinGauges.style.position = 'absolute'
+        containerLinGauges.style.display = 'flex'
+        containerLinGauges.style.flexDirection = 'column'
+        exampleContainer.append(containerLinGauges)
+        const addLinGauge = (title, property, ranges, mul = 1) => {
+            const container = document.createElement('div')
+            container.style.width = '100%'
+            container.style.flexGrow = '1'
+            containerLinGauges.append(container)
+            const linGauge = lc
+                .LinearGauge({ container, orientation: 'horizontal', animationsEnabled: false })
+                .setTitle(title)
+                .setTitleFont((font) => font.setSize(14))
+                .setTitleEffect(false)
+                .setBarThickness(20)
+                .setValueLabelFillStyle(emptyFill)
+                .setValueLabelFont((f) => f.setSize(0))
+                .setTickFont((f) => f.setSize(10))
+                .setLabelEffect(false)
+                .setTickMargin(0)
+                .setColorInterpolation(true)
+                .setPadding({ left: 3, right: 3, top: 0, bottom: 0 })
+                .setTitleMargin(0)
+            if (isImageFill(linGauge.engine.getBackgroundFillStyle())) {
+                linGauge.engine.setBackgroundFillStyle(new SolidFill({ color: ColorRGBA(0, 0, 0) }))
+            }
+            linGauge.setRanges(ranges)
+            onData((sample) => {
+                linGauge.setValue(sample[property])
+            })
+        }
+        addLinGauge('Torque', 'torque', [
+            { start: -750, color: ColorRGBA(0, 0, 0) },
+            { start: 0, color: ColorRGBA(0, 0, 0) },
+            { start: 750, color: ColorRGBA(255, 0, 0) },
+        ])
+        addLinGauge('Break', 'brake', [
+            { start: 0, color: ColorRGBA(0, 0, 0) },
+            { start: 100, color: ColorRGBA(255, 0, 0) },
+        ])
+        addLinGauge(
+            'Speed',
+            'speed',
+            [
+                { start: 0, color: ColorRGBA(0, 0, 0) },
+                { start: 250, color: ColorRGBA(255, 0, 0) },
+            ],
+            3.6,
+        )
+        addLinGauge('RPM', 'current_engine_rpm', [
+            { start: 0, color: ColorRGBA(0, 0, 0) },
+            { start: 10000, color: ColorRGBA(255, 0, 0) },
+        ])
+
         // #endregion
     })
