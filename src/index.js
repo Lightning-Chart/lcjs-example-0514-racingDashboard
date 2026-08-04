@@ -16,7 +16,7 @@ const {
     transparentFill,
     PointShape,
     AxisTickStrategies,
-    DataSetXY,
+    DataSet,
     Themes,
 } = lcjs
 
@@ -65,7 +65,7 @@ fetch(new URL(document.head.baseURI).origin + new URL(document.head.baseURI).pat
             listeners.push(clbk)
         }
 
-        const dataSet = new DataSetXY({
+        const dataSet = new DataSet({
             schema: {
                 time: { pattern: 'progressive' },
             },
@@ -81,7 +81,6 @@ fetch(new URL(document.head.baseURI).origin + new URL(document.head.baseURI).pat
         const chartTireTemperatures = lc
             .ChartXY({
                 container: containerTireTemperatures,
-                defaultAxisX: { type: 'linear-highPrecision' },
                 legend: { visible: false },
                 theme: (() => {
     const t = Themes[new URLSearchParams(window.location.search).get('theme') || 'darkGold'] || undefined
@@ -253,7 +252,6 @@ textRenderer: window.lcjsSmallView ? lcjs.htmlTextRenderer : undefined,
         const chartTimeSeries = lc
             .ChartXY({
                 container: containerTimeSeries,
-                defaultAxisX: { type: 'linear-highPrecision' },
                 legend: { visible: false },
                 theme: (() => {
     const t = Themes[new URLSearchParams(window.location.search).get('theme') || 'darkGold'] || undefined
